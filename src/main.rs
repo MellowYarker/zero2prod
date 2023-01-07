@@ -2,14 +2,24 @@ mod routes;
 
 use zero2prod::configuration::get_configuration;
 use zero2prod::startup::run;
+use zero2prod::telemetry::{get_subscriber, init_subscriber};
+use secrecy::ExposeSecret;
 use sqlx::PgPool;
 use std::net::TcpListener;
 
+// use tracing::{Subscriber, subscriber::set_global_default};
+// use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+// use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
+// use tracing_log::LogTracer;
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    let subscriber = get_subscriber("zero2prod".into(), "info".into(), std::io::stdout);
+    init_subscriber(subscriber);
+
     // Panic if we can't read configuration
     let configuration = get_configuration().expect("Failed to read configuration.");
-    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+    let connection_pool = PgPool::connect(&configuration.database.connection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres.");
     // We have removed the hardcoded `8000` -- it's coming from our settings!
