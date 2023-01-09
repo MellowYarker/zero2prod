@@ -18,5 +18,9 @@ ENV SQLX_OFFLINE true
 # We'll use the release profile to make it fast
 RUN cargo build --release
 
+# We want to use the production environment configuration.
+# This sets the host to `0.0.0.0`.
+ENV APP_ENVIRONMENT production
+
 # When `docker run` is executed, launch the binary.
 ENTRYPOINT ["./target/release/zero2prod"]
