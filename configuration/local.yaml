@@ -1,2 +1,5 @@
 application:
   host: 127.0.0.1
+database:
+  # Don't need ssl when running locally or testing.
+  require_ssl: false

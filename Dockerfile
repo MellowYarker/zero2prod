@@ -1,16 +1,22 @@
-# Builder stage for multi-stage build (faster!)
-# This stage is discarded at the end of the build.
-FROM rust:1.63.0 as builder
-
-# Let's switch our working directory to `app` (equivalent to `cd app`)
-# The `app` folder will be created for us by Docker in case it does not
-# exist already.
+FROM lukemathwalker/cargo-chef:latest-rust-1.63.0 as chef
 WORKDIR /app
 
 # Install the required system dependencies for our linking configuration
 RUN apt update && apt install lld clang -y
 
+FROM chef as planner
 # Copy all files from our working env to our Docker image
+COPY . .
+
+# Compute a lock-like file for our project
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef as builder
+COPY --from=planner /app/recipe.json recipe.json
+# Build our project deps, not our app!
+RUN cargo chef cook --release --recipe-path recipe.json
+# Up to this point, if our dep tree stays the same,
+# all layers should be cached.
 COPY . .
 
 # Use metadata for query at compilation time.
@@ -18,7 +24,7 @@ ENV SQLX_OFFLINE true
 
 # Let's build our binary!
 # We'll use the release profile to make it fast
-RUN cargo build --release
+RUN cargo build --release --bin zero2prod
 
 # Runtime stage (multi-stage).
 # FROM rust:1.63.0 AS runtime
