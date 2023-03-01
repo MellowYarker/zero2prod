@@ -3,3 +3,6 @@ application:
 database:
   # We want ssl in prod!
   require_ssl: true
+email_client:
+  base_url: "https://api.postmark.com"
+  sender_email: "router@rust-practice-newsletter.com"
